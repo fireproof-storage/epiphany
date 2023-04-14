@@ -1,6 +1,8 @@
-import React, { useState } from "react";
-import { MoonIcon } from "./icons/Moon";
-import logo from "./logo.svg";
+import React, { useEffect, useState } from "react";
+
+// import { Fireproof, Index } from '@fireproof/core'
+// import { useFireproof, FireproofCtx, FireproofCtxValue } from '@fireproof/core/hooks/use-fireproof'
+
 import { Discovery } from "./gpt";
 
 const discovery = new Discovery();
@@ -10,28 +12,14 @@ function App() {
   const [product, setProduct] = useState("");
   const [customer, setCustomer] = useState("");
 
-  function toggleDarkMode() {
-    if (
-      localStorage.theme === "dark" ||
-      (!("theme" in localStorage) &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches)
-    ) {
-      localStorage.setItem("theme", "light");
-      document.documentElement.classList.remove("dark");
-    } else {
-      localStorage.setItem("theme", "dark");
-      document.documentElement.classList.add("dark");
-    }
+  async function rehydrateDiscovery(){
+    await discovery.rehydrate()
+    setCount(count + 1)
   }
 
-  const toggle = (
-    <button
-      className="flex p-2 text-black rounded hover:text-yellow-400 dark:text-white focus:outline-none hover:bg-gray-500 dark:hover:bg-gray-500 dark:hover:text-yellow-400"
-      onClick={toggleDarkMode}
-    >
-      <MoonIcon></MoonIcon>
-    </button>
-  );
+  useEffect(()=>{
+    rehydrateDiscovery()
+  }, [])
 
   async function doGeneratePersonas(e) {
     e.preventDefault();
@@ -40,9 +28,9 @@ function App() {
     setCount(count + 1);
   }
 
-  const didInterview = discovery.personas.find((p) => p.didAsk);
+  // const didInterview = discovery.personas.find((p) => p.didAsk);
 
-  console.log("render", didInterview, discovery);
+  console.log("render", discovery);
 
   return (
     <div className="bg-gray-100 min-h-screen dark:bg-gray-900">
@@ -108,7 +96,7 @@ function App() {
           ))}
         </div>
       </main>
-      <FollowUp discovery={discovery} />
+      {discovery.personas.length && <FollowUp discovery={discovery} />}
     </div>
   );
 }
@@ -118,7 +106,7 @@ function FollowUp({ discovery }: any) {
   const [count, setCount] = useState(0);
 
   async function doGenerateSummary(e) {
-    e.preventDefault()
+    e.preventDefault();
     await discovery.generateInterviewSummary();
     setCount(count + 1);
   }
@@ -153,8 +141,28 @@ function FollowUp({ discovery }: any) {
           </button>
         </div>
       </form>
-      {discovery.interviewSummary && <p className="text=-black">{discovery.interviewSummary}</p>}
+      {discovery.interviewSummary && (
+        <p className="text=-black">{discovery.interviewSummary}</p>
+      )}
+      {discovery.followUps && <AskFollowUps discovery={discovery} />}
     </div>
+  );
+}
+
+function AskFollowUps({ discovery }) {
+  const [count, setCount] = useState(0);
+
+  async function doFollowUp() {
+    await discovery.askFollowUps();
+    setCount(count + 1);
+  }
+
+  return (
+    <>
+      <h3>Follow up questions</h3>
+      <p className="text=-black">{discovery.followUps}</p>
+      <button onClick={doFollowUp}>Ask them</button>
+    </>
   );
 }
 
@@ -206,7 +214,11 @@ function PersonaInterview({ persona }: any) {
 
         <div className="flex flex-col">
           {persona.conversations.map((c) => (
-            <PersonaConversation persona={persona} conversation={c} />
+            <PersonaConversation
+              persona={persona}
+              conversation={c}
+              key={c.description}
+            />
           ))}
         </div>
       </div>
@@ -218,10 +230,16 @@ function PersonaConversation({ persona, conversation }: any) {
   // console.log(persona, conversation);
   const [first, ...rest] = conversation;
   return (
-    <div className="flex flex-col items-start bg-gray-100 rounded-lg p-2 my-2">
-      <p className="text-gray-700 italic font-bold">{first.text}</p>
+    <div
+      className="flex flex-col items-start bg-gray-100 rounded-lg p-2 my-2"
+      key={persona.description}
+    >
+      <p key={first.text} className="text-gray-700 italic font-bold">
+        {first.text}
+      </p>
       {rest.map((said) => (
         <p
+          key={said.text}
           className={`mt-4 ${
             said.by === "persona" ? "pl-4" : "italic text-gray-700"
           }`}
