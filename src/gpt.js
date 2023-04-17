@@ -26,8 +26,8 @@ export class Discovery {
       openAIApiKey: "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",
     });
     this.db = Fireproof.storage("epiphany");
-    window.db = this.db;
-    this.typeIndex = new Index(this.db, 'byType', (doc, map) => map(doc.type, doc));
+    window.fireproof = this.db;
+    this.typeIndex = new Index(this.db, (doc, map) => map(doc.type, doc));
     this.doc = { _id: "discovery" };
   }
 
@@ -45,6 +45,11 @@ export class Discovery {
     return res.rows.map((r) =>
       Persona.fromDoc(r.value, this.interviewer, this.db)
     );
+  }
+
+  personaById(id) {
+    console.log(id, this.personas.map(p => p.id))
+    return this.personas.find((p) => p.id === id)
   }
 
   async askFollowUps(followups) {

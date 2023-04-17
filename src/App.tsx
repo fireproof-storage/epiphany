@@ -19,11 +19,11 @@ export interface LayoutProps {
 }
 function Layout({ children }: LayoutProps): JSX.Element {
   return (
-    <div className="bg-gray-100 min-h-screen dark:bg-gray-900">
-      <header className="bg-white py-4">
+    <div className="bg-gray-100 min-h-screen dark:bg-gray-900 dark:text-gray-100">
+      <header className="bg-white py-4 dark:bg-gray-800">
         <div className="container mx-auto">
-          <h1 className="text-2xl font-bold text-center text-gray-800">
-            Auto Steps to the Epiphany
+          <h1 className="text-2xl font-bold text-center">
+            <a href="/">Auto Steps to the Epiphany</a>
           </h1>
         </div>
       </header>
@@ -36,20 +36,16 @@ function App() {
   function defineRouter(): React.ReactNode {
     return (
       <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
         <Route path="persona">
-          <Route
-            path=":id"
-            element={<PersonaPage />}
-          ></Route>
+          <Route path=":id" element={<PersonaPage />}></Route>
         </Route>
       </Route>
     );
   }
   return (
     <RouterProvider
-      router={createBrowserRouter(createRoutesFromElements(defineRouter()), {
-        // basename: pageBase,
-      })}
+      router={createBrowserRouter(createRoutesFromElements(defineRouter()))}
       fallbackElement={<Home />}
     />
   );
@@ -91,9 +87,10 @@ function Home() {
             This app is inspired by the classic customer development methodology
             outlined in Steven Blank's <a href="">Four Steps to the Epiphany</a>
             , which offers practical patterns for finding product market fit.
-            It's a must read for anyone bringing a new product to market.
+            The book is a must read for anyone bringing a new product to market.
           </p>
-          <p className="pb-2">
+          <h3 className="text-xl font-bold my-2">Persona Development</h3>
+          <p className="py-2">
             First describe your product and your initial customer hypothesis.
             Then ChatGPT will synthesize a handful of customer personas for you.
             For each persona, click in and have a guided GPT interview with them
@@ -135,6 +132,9 @@ function Home() {
             </div>
           </form>
         </div>
+      </div>
+      {discovery.personas.length ? <h3 className="text-xl font-bold text-center m-12">Generated Personas</h3> : <></>}
+      <div className="w-full flex flex-wrap">
         {discovery.personas
           .filter((p) => p.description)
           .map((p) => (
@@ -145,19 +145,22 @@ function Home() {
   );
 }
 
-function TextBox({ label, id, value, valueChanged }: any) {
+export function TextBox({ label, id, value, valueChanged }: any) {
   return (
     <div className="mb-4">
-      <label className="block text-gray-700 font-bold mb-2" htmlFor={id}>
+      <label
+        className="block text-gray-700 font-bold mb-2 dark:text-gray-300"
+        htmlFor={id}
+      >
         {label}
       </label>
       <textarea
-        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        className="shadow border-none h-32 appearance-none rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-black leading-tight focus:outline-none focus:shadow-outline"
         id={id}
         name={id}
         onChange={({ target }) => valueChanged(target.value)}
         value={value}
-        placeholder="Enter customer here..."
+        placeholder={label}
       ></textarea>
     </div>
   );
