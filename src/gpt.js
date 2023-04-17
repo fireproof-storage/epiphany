@@ -27,7 +27,7 @@ export class Discovery {
     });
     this.db = Fireproof.storage("epiphany");
     window.db = this.db;
-    this.typeIndex = new Index(this.db, (doc, map) => map(doc.type, doc));
+    this.typeIndex = new Index(this.db, 'byType', (doc, map) => map(doc.type, doc));
     this.doc = { _id: "discovery" };
   }
 
