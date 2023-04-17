@@ -11,6 +11,8 @@
     "@fireproof/core": "^0.4.1",
     "dotenv": "^16.0.3",
     "langchain": "^0.0.56",
+    "react-router": "^6.8.1",
+    "react-router-dom": "^6.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

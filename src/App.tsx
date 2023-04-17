@@ -1,28 +1,67 @@
-import React, { useEffect, useState } from "react";
+import React, {ReactNode, useEffect, useState } from "react";
+import {
+  Route,
+  Outlet,
+  RouterProvider,
+  createBrowserRouter,
+  createRoutesFromElements,
+} from "react-router-dom";
 
 // import { Fireproof, Index } from '@fireproof/core'
 // import { useFireproof, FireproofCtx, FireproofCtxValue } from '@fireproof/core/hooks/use-fireproof'
 
 import { Discovery } from "./gpt";
+import { PersonaLink, PersonaPage } from "./Persona";
 
 const discovery = new Discovery();
+export interface LayoutProps {
+  children?: ReactNode
+}
+function Layout({ children }: LayoutProps): JSX.Element {
+  return <div className="bg-gray-100 min-h-screen dark:bg-gray-900">
+    <header className="bg-white py-4">
+      <div className="container mx-auto">
+        <h1 className="text-2xl font-bold text-center text-gray-800">
+          Auto Steps to the Epiphany
+        </h1>
+      </div>
+    </header>{children ? <>{children}</> : <Outlet />}
+  </div>
+}
 
 function App() {
+  function defineRouter(): React.ReactNode {
+    return (
+      <Route element={<Layout />}>
+        <Route path="persona">
+          <Route path=":id" loader={listLoader} element={<PersonaPage />}>
+          </Route>
+        </Route>
+      </Route>
+    )
+  }
+  return (<RouterProvider
+    router={createBrowserRouter(createRoutesFromElements(defineRouter()), { basename: pageBase })}
+    fallbackElement={<Home />}
+    />)
+}
+
+function Home() {
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState("");
   const [customer, setCustomer] = useState("");
 
-  async function rehydrateDiscovery(){
-    await discovery.rehydrate()
-    console.log('rehydrated', discovery)
-    if (discovery.doc?.product) setProduct(discovery.doc.product)
-    if (discovery.doc?.customer) setCustomer(discovery.doc.customer)
-    setCount(count + 1)
+  async function rehydrateDiscovery() {
+    await discovery.rehydrate();
+    console.log("rehydrated", discovery);
+    if (discovery.doc?.product) setProduct(discovery.doc.product);
+    if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
+    setCount(count + 1);
   }
 
-  useEffect(()=>{
-    rehydrateDiscovery()
-  }, [])
+  useEffect(() => {
+    rehydrateDiscovery();
+  }, []);
 
   async function doGeneratePersonas(e) {
     e.preventDefault();
@@ -36,51 +75,47 @@ function App() {
   console.log("render", discovery);
 
   return (
-    <div className="bg-gray-100 min-h-screen dark:bg-gray-900">
-      <header className="bg-white py-4">
-        <div className="container mx-auto">
-          <h1 className="text-2xl font-bold text-center text-gray-800">
-            Auto Epiphany
-          </h1>
+
+    <main className="container mx-auto py-8">
+      <div className="w-full flex flex-wrap">
+        <div className="w-1/2 p-4 mb-4">
+          <p className="pb-2">
+            This app is inspired by the classic customer development
+            methodology outlined in Steven Blank's{" "}
+            <a href="">Four Steps to the Epiphany</a>, which offers practical
+            patterns for finding product market fit. It's a must read for
+            anyone bringing a new product to market.
+          </p>
+          <p className="pb-2">
+            First describe your product and your initial customer
+            hypothesis. Then ChatGPT will synthesize a handful of customer
+            personas for you. For each persona, click in and have a guided GPT
+            interview with them about how your product can fit their needs.
+            After all the interviews are complete, GPT provides an set of
+            criteria your personas might evaluate your product using.
+          </p>
+          <p className="pb-2">
+            Provide your Open AI API key to get started. No data is sent to
+            the app, only to OpenAI's APIs. Your work is stored locally in the
+            browser using Fireproof.{" "}
+            <a href="">Read more about using Fireproof with AI</a>, and{" "}
+            <a href="">how to get started with React.</a>
+          </p>
         </div>
-      </header>
-      <main className="container mx-auto py-8">
-        <div className="w-full p-4 mb-4">
+        <div className="w-1/2 p-4 mb-4">
           <form>
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 font-bold mb-2"
-                htmlFor="product"
-              >
-                {" "}
-                Product
-              </label>
-              <textarea
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                id="product"
-                name="product"
-                onChange={({ target }) => setProduct(target.value)}
-                value={product}
-                placeholder="Enter product here..."
-              ></textarea>
-            </div>
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 font-bold mb-2"
-                htmlFor="customer"
-              >
-                {" "}
-                Customer
-              </label>
-              <textarea
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                id="customer"
-                name="customer"
-                onChange={({ target }) => setCustomer(target.value)}
-                value={customer}
-                placeholder="Enter customer here..."
-              ></textarea>
-            </div>
+            <TextBox
+              label="Product elevator pitch"
+              id="product"
+              value={product}
+              valueChanged={setProduct}
+            />
+            <TextBox
+              label="Target customer"
+              id="customer"
+              value={customer}
+              valueChanged={setCustomer}
+            />
             <div className="flex items-center justify-center">
               <button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
@@ -88,18 +123,35 @@ function App() {
                 id="generate"
                 onClick={doGeneratePersonas}
               >
-                Generate Customers
+                Generate Personas
               </button>
             </div>
           </form>
         </div>
-        <div className="w-full flex flex-wrap">
-          {discovery.personas.filter((p) => p.description).map((p) => (
-            <PersonaInterview persona={p}></PersonaInterview>
+        {discovery.personas
+          .filter((p) => p.description)
+          .map((p) => (
+            <PersonaLink persona={p} />
           ))}
-        </div>
-      </main>
-      {discovery.personas.length && <FollowUp discovery={discovery} />}
+      </div>
+    </main>
+  );
+}
+
+function TextBox({ label, id, value, valueChanged }: any) {
+  return (
+    <div className="mb-4">
+      <label className="block text-gray-700 font-bold mb-2" htmlFor={id}>
+        {label}
+      </label>
+      <textarea
+        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        id={id}
+        name={id}
+        onChange={({ target }) => valueChanged(target.value)}
+        value={value}
+        placeholder="Enter customer here..."
+      ></textarea>
     </div>
   );
 }
@@ -166,106 +218,6 @@ function AskFollowUps({ discovery }) {
       <p className="text=-black">{discovery.doc?.followUps}</p>
       <button onClick={doFollowUp}>Ask them</button>
     </>
-  );
-}
-
-function PersonaInterview({ persona }: any) {
-  const [perspective, setPerspective] = useState("");
-  const [count, setCount] = useState(0);
-
-//   const product = await ux.prompt('What is the quick elevator pitch for your product.')
-//   const customer = await ux.prompt('Please describe your most clearly understood customer or initial user.')
-//   const channel = await ux.prompt('What is the primary channel through which you will reach your customer?')
-//   const pricing = await ux.prompt('What is the pricing model for your product?')
-//   const problem = await ux.prompt('What is the problem that your customer is trying to solve?')
-//   const dayInLife = await ux.prompt('What is a typical day in the life of your customer?')
-//   const buyerMapPeople = await ux.prompt('Who are the people that influence the buying decision?')
-//   const roiJustification = await ux.prompt('What is the ROI justification for your product?')
-//   const buyingHabits = await ux.prompt('What are the buying habits of your customer? What channels to the puchase through?')
-
-  async function doInterview(e) {
-    e.preventDefault();
-    // console.log("do inteview", persona);
-    persona.perspective = perspective;
-    await persona.conductInterview(
-      "What are the biggest problems a product like this could help you solve?"
-    );
-    setCount(count + 1);
-    await persona.conductInterview("How much does this problem cost you?");
-    setCount(count + 1);
-    await persona.conductInterview("What other solutions are you considering?");
-    setCount(count + 1);
-    await persona.conductInterview(
-      "If you could wave a magic wand and change anything about this, what would you do?"
-    );
-    // console.log(persona.conversation);
-    await persona.persist()
-    setCount(count + 1);
-  }
-
-  return (
-    <div className="w-full md:w-1/3 mb-8 md:pr-4" key={persona.description}>
-      <h2 className="text-lg font-bold text-gray-800 mb-4">{persona.displayName()}</h2>
-      <div className="bg-white rounded-lg shadow-lg p-4">
-        <p className="text-gray-700 mb-2">{persona.description}</p>
-
-        <form>
-          {" "}
-          <textarea
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            onChange={({ target }) => setPerspective(target.value)}
-            value={perspective}
-            placeholder="Add optional perspective..."
-          ></textarea>
-          <div className="flex items-center justify-center">
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              type="submit"
-              id="generate"
-              onClick={doInterview}
-            >
-              Conduct Interview
-            </button>
-          </div>
-        </form>
-
-        <div className="flex flex-col">
-          {persona.conversations.map((c) => (
-            <PersonaConversation
-              persona={persona}
-              conversation={c}
-              key={c.description}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PersonaConversation({ persona, conversation }: any) {
-  // console.log(persona, conversation);
-  if (conversation.length === 0) return (<></>);
-  const [first, ...rest] = conversation;
-  return (
-    <div
-      className="flex flex-col items-start bg-gray-100 rounded-lg p-2 my-2"
-      key={persona.description}
-    >
-      <p key={first.text} className="text-gray-700 italic font-bold">
-        {first.text}
-      </p>
-      {rest.map((said) => (
-        <p
-          key={said.text}
-          className={`mt-4 ${
-            said.by === "persona" ? "pl-4" : "italic text-gray-700"
-          }`}
-        >
-          {said.text}
-        </p>
-      ))}
-    </div>
   );
 }
 
