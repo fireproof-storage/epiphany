@@ -130,6 +130,9 @@ function Home() {
             </a>{" "}
             and scale for free.
           </p>
+          <p className="py-2">
+            Report bugs and <a href="https://github.com/fireproof-storage/epiphany">fork me on GitHub</a>.
+          </p>
         </div>
         <div className="w-1/2 p-4 mb-4">
           <form>
