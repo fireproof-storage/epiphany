@@ -35,7 +35,7 @@ export class Discovery {
       });
     });
     this.listener = new Listener(this.db);
-    this.doc = { _id: "discovery" };
+    this.doc = { _id: "discovery", product: '', customer: '', openAIKey: '' };
     this.hydro = false;
     this.personas = [];
   }

@@ -81,13 +81,13 @@ function Home() {
     connectDiscovery();
   }, []);
 
-  async function doGeneratePersonas(e) {
+  async function doGeneratePersonas(e:any) {
     e.preventDefault();
     await discovery.generateCustomers(product, customer, openAIKey);
   }
 
   // console.log("render", discovery.personas.length, count);
-  async function doResetPersonas(e) {
+  async function doResetPersonas(e:any) {
     e.preventDefault();
     await discovery.resetPersonas();
   }
@@ -264,7 +264,7 @@ function FollowUp({ discovery }: any) {
   const [notes, setNotes] = useState("");
   const [count, setCount] = useState(0);
 
-  async function doGenerateSummary(e) {
+  async function doGenerateSummary(e:any) {
     e.preventDefault();
     await discovery.generateInterviewSummary();
     setCount(count + 1);
@@ -298,7 +298,7 @@ function FollowUp({ discovery }: any) {
   );
 }
 
-function AskFollowUps({ discovery }) {
+function AskFollowUps({ discovery }:any) {
   const [count, setCount] = useState(0);
 
   async function doFollowUp() {

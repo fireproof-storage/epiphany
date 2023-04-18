@@ -64,7 +64,7 @@ function PersonaInterview({ persona }: any) {
     if (discovery.hydro) discovery.registerChangeHandler(onChange);
   }, [onChange]);
 
-  async function doInterview(e) {
+  async function doInterview(e:any) {
     e.preventDefault();
     persona.perspective = perspective;
     setInterviewing(true);
@@ -73,7 +73,7 @@ function PersonaInterview({ persona }: any) {
     setInterviewing(false);
   }
 
-  async function doSummary(e) {
+  async function doSummary(e:any) {
     e.preventDefault();
     setInterviewing(true);
     await persona.summarizeInterview();
@@ -145,7 +145,7 @@ function PersonaInterview({ persona }: any) {
               : "Click 'Conduct Interview' to begin"}
           </h2>
 
-          {persona.conversations.map((c, i) => (
+          {persona.conversations.map((c:{}[], i:Number) => (
             <PersonaConversation persona={persona} conversation={c} key={i} />
           ))}
         </div>
@@ -166,7 +166,7 @@ function PersonaConversation({ persona, conversation }: any) {
       <p key={first.text + "ok"} className="italic font-bold">
         {first.text}
       </p>
-      {rest.map((said) => (
+      {rest.map((said:{text:string, by:string}) => (
         <p
           key={said.text}
           className={`mt-4 ${said.by === "persona" ? "pl-4" : "italic"}`}
