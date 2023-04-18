@@ -21,3 +21,6 @@ main a {
   text-decoration: underline;
   color: #ffa000;
 }
+main a:visited {
+  color: #011177;
+}

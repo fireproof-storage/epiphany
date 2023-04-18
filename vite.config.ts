@@ -7,6 +7,12 @@ import codesandbox from "@gsimone/codesandbox-vite-plugin";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    // exclude: ['@fireproof/core'],
+  },
+  define: {
+    global: "globalThis",
+  },
   plugins: [react(), codesandbox()],
   test: {
     globals: true,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Discovery } from "./gpt";
 
@@ -6,7 +6,7 @@ import { TextBox } from "./App";
 
 export function PersonaLink({ persona }: any) {
   return (
-    <div className="w-full md:w-1/3 mb-8 md:pr-4" key={persona.description}>
+    <div className="w-full md:w-1/3 mb-8 md:pr-4" key={persona.id}>
       <h2 className="text-lg font-bold  mb-4">{persona.displayName()}</h2>
       <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
         <p className=" mb-2">{persona.displayAbout()}</p>
@@ -26,16 +26,10 @@ const discovery = new Discovery();
 export function PersonaPage() {
   const { id } = useParams();
   const [persona, setPersona] = useState(null);
-  const [count, setCount] = useState(0);
-  
-  async function onChange() {
-    console.log('onchange')
-    setCount(count + 1);
-  }
 
   async function rehydrateDiscovery() {
     await discovery.rehydrate();
-    discovery.registerChangeHandler(onChange)
+    // discovery.registerChangeHandler(onChange)
     setPersona(discovery.personaById(id));
   }
 
@@ -51,20 +45,28 @@ function PersonaInterview({ persona }: any) {
   const [perspective, setPerspective] = useState(persona.perspective);
   const [count, setCount] = useState(0);
 
+  const onChange = useCallback(() => {
+    console.log("onchange", count);
+    setCount(count + 1);
+  }, [count, setCount, persona]);
+
+  useEffect(() => {
+    discovery.registerChangeHandler(onChange);
+  });
 
   async function doInterview(e) {
     e.preventDefault();
     // console.log("do inteview", persona);
     persona.perspective = perspective;
-    await persona.doInterview()
+    await persona.doInterview();
   }
 
   async function doSummary(e) {
     e.preventDefault();
     await persona.summarizeInterview();
-    setCount(count + 1);
+    // setCount(count + 1);
   }
-
+  console.log("ps", count);
   return (
     <>
       <a className="m-8 w-full block" href="/">
@@ -117,12 +119,8 @@ function PersonaInterview({ persona }: any) {
           )}
         </div>
         <div className="w-1/2 px-12">
-          {persona.conversations.map((c) => (
-            <PersonaConversation
-              persona={persona}
-              conversation={c}
-              key={c.description}
-            />
+          {persona.conversations.map((c, i) => (
+            <PersonaConversation persona={persona} conversation={c} key={i} />
           ))}
         </div>
       </div>
@@ -139,7 +137,7 @@ function PersonaConversation({ persona, conversation }: any) {
       className="flex flex-col items-start bg-gray-100 dark:bg-gray-800 rounded-lg p-6 my-2"
       key={first.text}
     >
-      <p key={first.text+"ok"} className="italic font-bold">
+      <p key={first.text + "ok"} className="italic font-bold">
         {first.text}
       </p>
       {rest.map((said) => (

@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, useCallback, useEffect, useState } from "react";
 import {
   Route,
   Outlet,
@@ -6,9 +6,6 @@ import {
   createBrowserRouter,
   createRoutesFromElements,
 } from "react-router-dom";
-
-// import { Fireproof, Index } from '@fireproof/core'
-// import { useFireproof, FireproofCtx, FireproofCtxValue } from '@fireproof/core/hooks/use-fireproof'
 
 import { Discovery } from "./gpt";
 import { PersonaLink, PersonaPage } from "./Persona";
@@ -57,10 +54,13 @@ function Home() {
   const [customer, setCustomer] = useState("");
   const [openAIKey, setOpenAIKey] = useState("");
 
-  async function onChange() {
-    // console.log("onchange");
-    setCount(count + 1);
-  }
+  const onChange = useCallback(
+    () => {
+      console.log("onchange", count);
+      setCount(count + 1);
+    },
+    [count],
+  );
 
   async function connectDiscovery() {
     if (discovery.hydro) return;
@@ -70,6 +70,7 @@ function Home() {
     if (discovery.doc?.product) setProduct(discovery.doc.product);
     if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
     if (discovery.doc?.openAIKey) setOpenAIKey(discovery.doc.openAIKey);
+    setCount(count + 1);
   }
 
   useEffect(() => {
@@ -79,6 +80,12 @@ function Home() {
   async function doGeneratePersonas(e) {
     e.preventDefault();
     await discovery.generateCustomers(product, customer, openAIKey);
+  }
+
+  console.log('render', discovery.personas.length, count)
+  async function doResetPersonas(e) {
+    e.preventDefault();
+    await discovery.resetPersonas();
   }
 
   return (
@@ -151,14 +158,28 @@ function Home() {
               valueChanged={setCustomer}
             />
             <div className="flex items-center justify-center">
-              {openAIKey ? (<button
+              {openAIKey ? (discovery.personas.length ? (<><button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 type="submit"
                 id="generate"
                 onClick={doGeneratePersonas}
               >
-                Generate {discovery.personas.length ? 'Additional' : ''} Personas
-              </button>) : (<button
+                Generate Additional Personas
+              </button><button
+                className="bg-orange-500 hover:bg-orange-700 ml-2 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                type="submit"
+                id="reset"
+                onClick={doResetPersonas}
+              >
+                Reset Personas
+              </button></>) : (<button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                type="submit"
+                id="generate"
+                onClick={doGeneratePersonas}
+              >
+                Generate Personas
+              </button>)) : (<button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 type="submit"
                 id="generate"
@@ -181,7 +202,7 @@ function Home() {
         {discovery.personas
           .filter((p) => p.description)
           .map((p) => (
-            <PersonaLink persona={p} />
+            <PersonaLink persona={p} key={p.id}/>
           ))}
       </div>
     </main>
