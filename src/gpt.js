@@ -1,12 +1,12 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 // import { useFireproof, FireproofCtx } from '@fireproof/core/hooks/use-fireproof'
-// import { Fireproof, Index, Listener } from "@fireproof/core";
-import {
-  Fireproof,
-  Index,
-  Listener,
-} from "../../fireproof/packages/fireproof/";
+import { Fireproof, Index, Listener } from "@fireproof/core";
+// import {
+//   Fireproof,
+//   Index,
+//   Listener,
+// } from "../../fireproof/packages/fireproof/";
 
 const TEMPERATURE = 0.2;
 
