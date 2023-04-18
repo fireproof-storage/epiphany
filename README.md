@@ -6,6 +6,8 @@ This app is inspired by the classic customer development methodology outlined in
 
 This app uses the auto-GPT method. It creates a set of personas and simulates product interviews with them. It then summarizes each interview and provides an overall summary. This is no substitute for real customer interviews.
 
+<img width="1349" alt="Screen Shot 2023-04-18 at 10 08 34 AM" src="https://user-images.githubusercontent.com/253/232882989-c4b134ec-3db8-4135-a7fc-132f158a4df1.png">
+
 ## Persona Development
 
 1. Describe your product and your initial customer hypothesis.
