@@ -11,7 +11,7 @@ export function PersonaLink({ persona }: any) {
       <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
         <p className=" mb-2">{persona.displayAbout()}</p>
         <div className="underline text-right">
-          {persona.conversations.length ? (
+          {persona.hasInterviewed() ? (
             <a href={`/persona/${persona.id}`}>View conversation</a>
           ) : (
             <a href={`/persona/${persona.id}`}>Conduct interview</a>
@@ -43,6 +43,7 @@ export function PersonaPage() {
 function PersonaInterview({ persona }: any) {
   const [perspective, setPerspective] = useState("");
   const [count, setCount] = useState(0);
+  const [interviewing, setInterviewing] = useState(false);
 
   useEffect(() => {
     discovery.listener.on("*", async () => {
@@ -66,15 +67,18 @@ function PersonaInterview({ persona }: any) {
   async function doInterview(e) {
     e.preventDefault();
     persona.perspective = perspective;
+    setInterviewing(true);
     await persona.doInterview();
     await persona.summarizeInterview();
+    setInterviewing(false);
   }
 
   async function doSummary(e) {
     e.preventDefault();
+    setInterviewing(true);
     await persona.summarizeInterview();
+    setInterviewing(false);
   }
-  console.log("ps", count);
   return (
     <>
       <a className="m-8 w-full block" href="/">
@@ -93,24 +97,30 @@ function PersonaInterview({ persona }: any) {
                 valueChanged={setPerspective}
               />
               <div className="flex items-center justify-center">
-                <button
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                  type="submit"
-                  id="generate"
-                  onClick={doInterview}
-                >
-                  {persona.conversations.length ? "Redo" : "Conduct"} Interview
-                </button>
-
-                {persona.conversations.length ? (
-                  <button
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 mx-4 px-4 rounded focus:outline-none focus:shadow-outline"
-                    type="submit"
-                    id="summarize"
-                    onClick={doSummary}
-                  >
-                    Summarize
-                  </button>
+                {!interviewing ? (
+                  <>
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      type="submit"
+                      id="generate"
+                      onClick={doInterview}
+                    >
+                      {persona.conversations.length ? "Redo" : "Conduct"}{" "}
+                      Interview
+                    </button>
+                    {persona.conversations.length ? (
+                      <button
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 mx-4 px-4 rounded focus:outline-none focus:shadow-outline"
+                        type="submit"
+                        id="summarize"
+                        onClick={doSummary}
+                      >
+                        Summarize
+                      </button>
+                    ) : (
+                      <></>
+                    )}
+                  </>
                 ) : (
                   <></>
                 )}
@@ -127,6 +137,14 @@ function PersonaInterview({ persona }: any) {
           )}
         </div>
         <div className="w-1/2 px-12">
+          <h2 className="text-lg font-bold mb-4">
+            {interviewing
+              ? "Interview will take a few minutes"
+              : persona.hasInterviewed()
+              ? "Interview complete"
+              : "Click 'Conduct Interview' to begin"}
+          </h2>
+
           {persona.conversations.map((c, i) => (
             <PersonaConversation persona={persona} conversation={c} key={i} />
           ))}

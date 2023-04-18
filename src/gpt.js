@@ -25,7 +25,15 @@ export class Discovery {
   constructor() {
     this.db = Fireproof.storage("epiphany");
     window.fireproof = this.db;
-    this.typeIndex = new Index(this.db, (doc, map) => map(doc.type, doc));
+    this.typeIndex = new Index(this.db, (doc, map) => {
+      map(doc.type, {
+        // only the fields for the home page
+        _id : doc._id,
+        interviewSummary: doc.interviewSummary || null,
+        description: doc.description || null,
+        didInterview : doc.conversations ? doc.conversations.length > 0 : false,
+      });
+    });
     this.listener = new Listener(this.db);
     this.doc = { _id: "discovery" };
     this.hydro = false;
@@ -33,27 +41,37 @@ export class Discovery {
   }
 
   async registerChangeHandler(fn) {
-    if (this.unlisten) this.unlisten()
+    if (this.unlisten) this.unlisten();
     this.unlisten = this.listener.on("*", async () => {
       // await this.rehydrate();
-      fn();      
+      fn();
     });
   }
 
-  async rehydrate() {
+  async rehydrate(page) {
     this.hydro = true;
     // load personas from fireproof
-    this.personas = await this.loadPersonas();
+    this.personas = await this.loadPersonas(page);
     this.doc = await this.db
       .get("discovery")
       .catch((e) => ({ _id: "discovery" }));
   }
 
-  async loadPersonas() {
+  async loadPersonas(page) {
     console.log("do query");
     const res = await this.typeIndex.query({ key: "persona" });
-    // console.log("personas", res.rows);
-    return res.rows.map((r) => Persona.fromDoc(r.value, this.db));
+    console.log("personas", res.rows);
+    return await Promise.all(
+      res.rows.map(async (r) => {
+        if (page !== "home") {
+          const doc = await this.db.get(r.id);
+          return Persona.fromDoc(doc, this.db);
+        } else {
+          // no conversations on home page
+          return Persona.fromDoc(r.value, this.db);
+        }
+      })
+    );
   }
 
   async resetPersonas() {
@@ -139,7 +157,7 @@ export class Discovery {
 
 export class Persona {
   static docFields =
-    "openAIKey description product customer conversations perspective followUpsAnswer interviewSummary";
+    "openAIKey description product customer conversations perspective followUpsAnswer interviewSummary didInterview";
 
   perspective = "";
   constructor(description, { product, customer, openAIKey }, db) {
@@ -196,6 +214,10 @@ export class Persona {
 
   displayAbout() {
     return this.description?.match(/[-:](.*)/)[1];
+  }
+
+  hasInterviewed() {
+    return this.conversations ? this.conversations.length > 0 : this.didInterview
   }
 
   static fromDoc(doc, db) {

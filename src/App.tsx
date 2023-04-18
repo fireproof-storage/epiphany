@@ -69,7 +69,7 @@ function Home() {
   async function connectDiscovery() {
     if (discovery.hydro) return;
     console.log("connectDiscovery");
-    await discovery.rehydrate();
+    await discovery.rehydrate('home');
     discovery.registerChangeHandler(onChange);
     if (discovery.doc?.product) setProduct(discovery.doc.product);
     if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
