@@ -19,8 +19,8 @@ export interface LayoutProps {
 }
 function Layout({ children }: LayoutProps): JSX.Element {
   return (
-    <div className="bg-gray-100 min-h-screen dark:bg-gray-900 dark:text-gray-100">
-      <header className="bg-white py-4 dark:bg-gray-800">
+    <div className="bg-gray-200 min-h-screen dark:bg-gray-900 dark:text-gray-100">
+      <header className="bg-gray-100 py-4 dark:bg-gray-800">
         <div className="container mx-auto">
           <h1 className="text-2xl font-bold text-center">
             <a href="/">Auto Steps to the Epiphany</a>
@@ -55,29 +55,31 @@ function Home() {
   const [count, setCount] = useState(0);
   const [product, setProduct] = useState("");
   const [customer, setCustomer] = useState("");
+  const [openAIKey, setOpenAIKey] = useState("");
 
-  async function rehydrateDiscovery() {
-    await discovery.rehydrate();
-    console.log("rehydrated", discovery);
-    if (discovery.doc?.product) setProduct(discovery.doc.product);
-    if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
+  async function onChange() {
+    // console.log("onchange");
     setCount(count + 1);
   }
 
+  async function connectDiscovery() {
+    if (discovery.hydro) return;
+    console.log("connectDiscovery");
+    await discovery.rehydrate();
+    discovery.registerChangeHandler(onChange);
+    if (discovery.doc?.product) setProduct(discovery.doc.product);
+    if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
+    if (discovery.doc?.openAIKey) setOpenAIKey(discovery.doc.openAIKey);
+  }
+
   useEffect(() => {
-    rehydrateDiscovery();
+    connectDiscovery();
   }, []);
 
   async function doGeneratePersonas(e) {
     e.preventDefault();
-    // console.log("doGenerate", customer, product);
-    await discovery.generateCustomers(product, customer);
-    setCount(count + 1);
+    await discovery.generateCustomers(product, customer, openAIKey);
   }
-
-  // const didInterview = discovery.personas.find((p) => p.didAsk);
-
-  console.log("render", discovery);
 
   return (
     <main className="container mx-auto py-8">
@@ -108,6 +110,34 @@ function Home() {
         </div>
         <div className="w-1/2 p-4 mb-4">
           <form>
+            <div className="mb-4">
+              <label
+                className="block text-gray-700 font-bold mb-2 dark:text-gray-300"
+                htmlFor="openaikey"
+              >
+                Your OpenAI API key (
+                <a href="https://platform.openai.com/account/api-keys">
+                  get one here
+                </a>
+                ):
+              </label>
+              <input
+        className="shadow border-none appearance-none rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-black leading-tight focus:outline-none focus:shadow-outline"
+        type="text"
+                id="openaikey"
+                name="openaikey"
+                placeholder="sk-..."
+                value={openAIKey}
+                onChange={(e) => {
+                  setOpenAIKey(e.target.value);
+                }}
+              />
+              <p className="italic p-2">
+                If you work for OpenAI, think about implementing{" "}
+                <a href="https://ucan.xyz/">UCAN</a> for distributed auth.
+              </p>
+            </div>
+
             <TextBox
               label="Product elevator pitch"
               id="product"
@@ -121,19 +151,32 @@ function Home() {
               valueChanged={setCustomer}
             />
             <div className="flex items-center justify-center">
-              <button
+              {openAIKey ? (<button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 type="submit"
                 id="generate"
                 onClick={doGeneratePersonas}
               >
-                Generate Personas
-              </button>
+                Generate {discovery.personas.length ? 'Additional' : ''} Personas
+              </button>) : (<button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                type="submit"
+                id="generate"
+                disabled
+              >
+                Please enter API key to begin
+              </button>)}
             </div>
           </form>
         </div>
       </div>
-      {discovery.personas.length ? <h3 className="text-xl font-bold text-center m-12">Generated Personas</h3> : <></>}
+      {discovery.personas.length ? (
+        <h3 className="text-xl font-bold text-center m-12">
+          Generated Personas
+        </h3>
+      ) : (
+        <></>
+      )}
       <div className="w-full flex flex-wrap">
         {discovery.personas
           .filter((p) => p.description)

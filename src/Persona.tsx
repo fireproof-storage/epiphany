@@ -23,13 +23,19 @@ export function PersonaLink({ persona }: any) {
 }
 const discovery = new Discovery();
 
-export function PersonaPage(props) {
+export function PersonaPage() {
   const { id } = useParams();
   const [persona, setPersona] = useState(null);
-  console.log("props", id);
+  const [count, setCount] = useState(0);
+  
+  async function onChange() {
+    console.log('onchange')
+    setCount(count + 1);
+  }
 
   async function rehydrateDiscovery() {
     await discovery.rehydrate();
+    discovery.registerChangeHandler(onChange)
     setPersona(discovery.personaById(id));
   }
 
@@ -42,41 +48,21 @@ export function PersonaPage(props) {
 
 function PersonaInterview({ persona }: any) {
   if (!persona) return <></>;
-  const [perspective, setPerspective] = useState("");
+  const [perspective, setPerspective] = useState(persona.perspective);
   const [count, setCount] = useState(0);
 
-  //   const product = await ux.prompt('What is the quick elevator pitch for your product.')
-  //   const customer = await ux.prompt('Please describe your most clearly understood customer or initial user.')
-  //   const channel = await ux.prompt('What is the primary channel through which you will reach your customer?')
-  //   const pricing = await ux.prompt('What is the pricing model for your product?')
-  //   const problem = await ux.prompt('What is the problem that your customer is trying to solve?')
-  //   const dayInLife = await ux.prompt('What is a typical day in the life of your customer?')
-  //   const buyerMapPeople = await ux.prompt('Who are the people that influence the buying decision?')
-  //   const roiJustification = await ux.prompt('What is the ROI justification for your product?')
-  //   const buyingHabits = await ux.prompt('What are the buying habits of your customer? What channels to the puchase through?')
 
   async function doInterview(e) {
     e.preventDefault();
     // console.log("do inteview", persona);
     persona.perspective = perspective;
-    persona.conversations = [];
-    await persona.conductInterview(
-      "What are the biggest problems a product like this could help you solve?"
-    );
-    setCount(count + 1);
-    await persona.conductInterview("How much does this problem cost you?");
-    setCount(count + 1);
-    await persona.conductInterview("What other solutions are you considering?");
-    setCount(count + 1);
-    await persona.conductInterview(
-      "If you could wave a magic wand and change anything about this, what would you do?"
-    );
-    // console.log(persona.conversation);
-    await persona.persist();
-    setCount(count + 1);
+    await persona.doInterview()
   }
-  async function doSummary() {
 
+  async function doSummary(e) {
+    e.preventDefault();
+    await persona.summarizeInterview();
+    setCount(count + 1);
   }
 
   return (
@@ -115,10 +101,20 @@ function PersonaInterview({ persona }: any) {
                   >
                     Summarize
                   </button>
-                ) : <></>}
+                ) : (
+                  <></>
+                )}
               </div>
             </form>
           </div>
+          {persona.interviewSummary ? (
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg mt-6 p-4">
+              <h3 className="text-xl font-bold">Summary</h3>
+              <p className="mt-2">{persona.interviewSummary}</p>
+            </div>
+          ) : (
+            <></>
+          )}
         </div>
         <div className="w-1/2 px-12">
           {persona.conversations.map((c) => (
@@ -141,9 +137,9 @@ function PersonaConversation({ persona, conversation }: any) {
   return (
     <div
       className="flex flex-col items-start bg-gray-100 dark:bg-gray-800 rounded-lg p-6 my-2"
-      key={persona.description}
+      key={first.text}
     >
-      <p key={first.text} className="italic font-bold">
+      <p key={first.text+"ok"} className="italic font-bold">
         {first.text}
       </p>
       {rest.map((said) => (

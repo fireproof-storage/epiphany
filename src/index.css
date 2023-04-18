@@ -16,3 +16,8 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+main a {
+  text-decoration: underline;
+  color: #ffa000;
+}

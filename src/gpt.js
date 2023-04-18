@@ -4,8 +4,10 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
 // import {config} from 'dotenv'
 // config()
-import { Fireproof, Index } from "@fireproof/core";
+import { Fireproof, Index, Listener } from "@fireproof/core";
 // import { useFireproof, FireproofCtx } from '@fireproof/core/hooks/use-fireproof'
+
+const TEMPERATURE = 0.2
 
 // class HumanChatMessage {}
 // class SystemChatMessage {}
@@ -20,18 +22,26 @@ import { Fireproof, Index } from "@fireproof/core";
 
 export class Discovery {
   constructor() {
-    this.personas = [];
-    this.interviewer = new ChatOpenAI({
-      temperature: 0,
-      openAIApiKey: "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",
-    });
     this.db = Fireproof.storage("epiphany");
     window.fireproof = this.db;
     this.typeIndex = new Index(this.db, (doc, map) => map(doc.type, doc));
+    this.listener = new Listener(this.db);
     this.doc = { _id: "discovery" };
+    this.hydro = false;
+    this.personas = [];
+  }
+
+  async registerChangeHandler(fn) {
+    console.log("registerChangeHandler");
+    this.listener.on("*", async () => {
+      console.log("op*");
+      await this.rehydrate();
+      fn();
+    });
   }
 
   async rehydrate() {
+    this.hydro = true;
     // load personas from fireproof
     this.personas = await this.loadPersonas();
     this.doc = await this.db
@@ -48,8 +58,11 @@ export class Discovery {
   }
 
   personaById(id) {
-    console.log(id, this.personas.map(p => p.id))
-    return this.personas.find((p) => p.id === id)
+    console.log(
+      id,
+      this.personas.map((p) => p.id)
+    );
+    return this.personas.find((p) => p.id === id);
   }
 
   async askFollowUps(followups) {
@@ -58,32 +71,41 @@ export class Discovery {
     );
   }
 
-  async generateCustomers(product, customer) {
+  async generateCustomers(product, customer, openAIKey) {
     this.doc.product = product;
     this.doc.customer = customer;
+    this.doc.openAIKey = openAIKey;
     await this.db.put(this.doc);
 
+    if (!this.interviewer) {
+      this.interviewer = new ChatOpenAI({
+        temperature: TEMPERATURE,
+        openAIApiKey: openAIKey,
+      });
+    }
     const gptPeople = await this.interviewer.call([
       new SystemChatMessage(
         `You have read The Four Steps to the Epiphany by Steven Gary Blank and you are ready to
-        start your first customer interview. You will help gather people to interview and then interview them. `
+        start your first customer interview. You will help gather people to interview and then interview them.
+        This is the product you are building: ${product}. The customer you are building for is: ${customer}.`
       ),
       new HumanChatMessage(
-        `Based on this elevator pitch, and customer description, give a list of five people that would be interested 
-          in this product. Give them memorable names and relevant descriptions. Eg: Talkative Tom, a frontend 
-          designer who is always telling his peers about new cool demos on CodePen.
-          Product pitch: ${product} Customer description: ${customer}`
+        `Based on the product and customer descriptions, give a list of five people that would be interested 
+          in this product. Give them memorable names and relevant descriptions. Your output should be in the
+          form of a newline-delimited list, with each line looking like \`Talkative Tom: a frontend 
+          designer who is always telling his peers about new cool demos on CodePen.\`
+          `
       ),
     ]);
 
     const people = gptPeople.text.split("\n");
 
     for (const person of people) {
+      if (!person) continue;
       const persona = new Persona(
         person,
         this.interviewer,
-        product,
-        customer,
+        this.doc,
         this.db
       );
       await persona.persist();
@@ -116,16 +138,12 @@ export class Discovery {
 
 export class Persona {
   static docFields =
-    "description product customer conversations perspective followUpsAnswer";
+    "openAIKey description product customer conversations perspective followUpsAnswer interviewSummary";
 
   perspective = "";
-  constructor(description, interviewer, product, customer, db) {
+  constructor(description, interviewer, {product, customer, openAIKey}, db) {
     this.interviewer = interviewer;
-    this.chat = new ChatOpenAI({
-      temperature: 0,
-      openAIApiKey: "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",
-    });
-
+    this.openAIKey = openAIKey;
     this.description = description;
     this.didAsk = false;
     this.conversations = [];
@@ -135,16 +153,27 @@ export class Persona {
     this.db = db;
   }
 
+  myChat() { 
+    if (this.chat) return this.chat
+    this.chat = new ChatOpenAI({
+      temperature: TEMPERATURE,
+      openAIApiKey: this.openAIKey,
+    });
+    return this.chat
+  }
+
   displayName() {
-    return this.description?.split("-")[0];
+    const match =  this.description?.match(/(.*?)[-:]/)
+    console.log('match', match, this.description)
+    return match && match[1];
   }
 
   displayAbout() {
-    return this.description?.split("-")[1];
+    return this.description?.match(/[-:](.*)/)[1];
   }
 
   static fromDoc(doc, interviewer, db) {
-    const persona = new Persona(null, interviewer, null, null, db);
+    const persona = new Persona(null, interviewer, doc, db);
     Persona.docFields
       .split(" ")
       .forEach((field) => (persona[field] = doc[field]));
@@ -170,12 +199,34 @@ export class Persona {
   }
 
   async askFollowUps(followups) {
-    const qAnswer = await this.chat.call(new HumanChatMessage(followups));
+    const qAnswer = await this.myChat().call(new HumanChatMessage(followups));
     this.followUpsAnswer = qAnswer.text;
     await this.persist(this.db);
   }
 
-  async conductInterview(question, thisConvo = null, rounds = 3) {
+  //   const product = await ux.prompt('What is the quick elevator pitch for your product.')
+  //   const customer = await ux.prompt('Please describe your most clearly understood customer or initial user.')
+  //   const channel = await ux.prompt('What is the primary channel through which you will reach your customer?')
+  //   const pricing = await ux.prompt('What is the pricing model for your product?')
+  //   const problem = await ux.prompt('What is the problem that your customer is trying to solve?')
+  //   const dayInLife = await ux.prompt('What is a typical day in the life of your customer?')
+  //   const buyerMapPeople = await ux.prompt('Who are the people that influence the buying decision?')
+  //   const roiJustification = await ux.prompt('What is the ROI justification for your product?')
+  //   const buyingHabits = await ux.prompt('What are the buying habits of your customer? What channels to the puchase through?')
+
+  async doInterview() {
+    this.conversations = []; // reset
+    await this.pursueQuestions(
+      "What are the biggest problems a product like this could help you solve?"
+    );
+    await this.pursueQuestions("How much does this problem cost you?");
+    await this.pursueQuestions("What other solutions are you considering?");
+    await this.pursueQuestions(
+      "If you could wave a magic wand and change anything about this, what would you do?"
+    );
+  }
+
+  async pursueQuestions(question, thisConvo = null, rounds = 3) {
     if (rounds < 1) return;
     if (!thisConvo) {
       thisConvo = [];
@@ -193,11 +244,13 @@ export class Persona {
     }
     messages.push(new HumanChatMessage(question));
 
-    const qAnswer = await this.chat.call(messages);
-
     thisConvo.push({ by: "interviewer", text: question });
+    await this.persist(this.db);
+
+    const qAnswer = await this.myChat().call(messages);
 
     thisConvo.push({ by: "persona", text: qAnswer.text });
+    await this.persist(this.db);
 
     const furtherQuestions = await this.interviewer.call([
       new SystemChatMessage(
@@ -205,7 +258,22 @@ export class Persona {
       ),
       new HumanChatMessage(qAnswer.text),
     ]);
-    await this.persist()
-    return this.conductInterview(furtherQuestions.text, thisConvo, rounds - 1);
+    return this.pursueQuestions(furtherQuestions.text, thisConvo, rounds - 1);
+  }
+
+  async summarizeInterview() {
+    console.log(this.conversations.toString());
+    const qAnswer = await this.myChat().call([
+      new SystemChatMessage(
+        `Your interview is complete, the interviewer will now ask for a summary. Here is the interview text as a reminder: ${JSON.stringify(
+          this.conversations
+        )}`
+      ),
+      new HumanChatMessage(
+        "Provide a list of the most important problems Fireproof can solve for you, and the impact the soltuion would have."
+      ),
+    ]);
+    this.interviewSummary = qAnswer.text;
+    await this.persist();
   }
 }
