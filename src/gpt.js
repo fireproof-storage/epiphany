@@ -28,14 +28,14 @@ export class Discovery {
     // only the fields for the home page
     this.typeIndex = new Index(this.db, (doc, map) => {
       map(doc.type, {
-        _id : doc._id,
+        _id: doc._id,
         interviewSummary: doc.interviewSummary || null,
         description: doc.description || null,
-        didInterview : doc.conversations ? doc.conversations.length > 0 : false,
+        didInterview: doc.conversations ? doc.conversations.length > 0 : false,
       });
     });
     this.listener = new Listener(this.db);
-    this.doc = { _id: "discovery", product: '', customer: '', openAIKey: '' };
+    this.doc = { _id: "discovery", product: "", customer: "", openAIKey: "" };
     this.hydro = false;
     this.personas = [];
   }
@@ -127,8 +127,8 @@ export class Discovery {
       if (!person) continue;
       if (/^\s*$/.test(person)) continue;
       if (!/[-:]/.test(person)) {
-        console.log('need to parse', person)
-        continue
+        console.log("need to parse", person);
+        continue;
       }
       // consoloe.log("person", person);
       const persona = new Persona(person, this.doc, this.db);
@@ -213,18 +213,20 @@ export class Persona {
   }
 
   displayName() {
-    const match = this.description?.match(/(.*?)[-:]/);
+    const match = this.description?.match(/(.*?)[:]/);
     // console.log('match', match, this.description)
     return match && match[1];
   }
 
   displayAbout() {
     // console.log(this.description)
-    return this.description?.match(/[-:](.*)/)[1];
+    return this.description?.match(/[:](.*)/)[1];
   }
 
   hasInterviewed() {
-    return this.conversations ? this.conversations.length > 0 : this.didInterview
+    return this.conversations
+      ? this.conversations.length > 0
+      : this.didInterview;
   }
 
   static fromDoc(doc, db) {
