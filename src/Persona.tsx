@@ -52,9 +52,9 @@ function PersonaInterview({ persona }: any) {
   }, []);
 
   const onChange = useCallback(() => {
-    console.log("onchange", count);
+    // console.log("onchange", count);
     setCount(count + 1);
-  }, [count, persona, perspective]);
+  }, [count, persona, perspective, interviewing]);
 
   useEffect(() => {
     setPerspective(persona.perspective);

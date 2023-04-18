@@ -18,13 +18,13 @@ function Layout({ children }: LayoutProps): JSX.Element {
   return (
     <div className="bg-gray-200 text-gray-900 min-h-screen dark:bg-gray-900 dark:text-gray-100">
       <header className="py-4 bg-gray-800 text-gray-100">
-        <a href="https://fireproof.storage/" style={{position:'absolute'}}>
-            <img
-              src="https://fireproof.storage/static/img/logo-animated.svg"
-              alt="Fireproof Logo"
-              style={{ height: "45px", width: "auto", paddingLeft: "0.5em" }}
-            />
-          </a>
+        <a href="https://fireproof.storage/" style={{ position: "absolute" }}>
+          <img
+            src="https://fireproof.storage/static/img/logo-animated.svg"
+            alt="Fireproof Logo"
+            style={{ height: "45px", width: "auto", paddingLeft: "0.5em" }}
+          />
+        </a>
         <div className="container mx-auto">
           <h1 className="text-2xl font-bold text-center">
             <a href="/">Auto Steps to the Epiphany</a>
@@ -60,16 +60,17 @@ function Home() {
   const [product, setProduct] = useState("");
   const [customer, setCustomer] = useState("");
   const [openAIKey, setOpenAIKey] = useState("");
+  const [generating, setGenerating] = useState(false);
 
   const onChange = useCallback(() => {
     // console.log("onchange", count);
     setCount(count + 1);
-  }, [count]);
+  }, [count, product, customer, openAIKey, generating]);
 
   async function connectDiscovery() {
     if (discovery.hydro) return;
-    console.log("connectDiscovery");
-    await discovery.rehydrate('home');
+    // console.log("connectDiscovery");
+    await discovery.rehydrate("home");
     discovery.registerChangeHandler(onChange);
     if (discovery.doc?.product) setProduct(discovery.doc.product);
     if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
@@ -81,13 +82,15 @@ function Home() {
     connectDiscovery();
   }, []);
 
-  async function doGeneratePersonas(e:any) {
+  async function doGeneratePersonas(e: any) {
     e.preventDefault();
+    setGenerating(true);
     await discovery.generateCustomers(product, customer, openAIKey);
+    setGenerating(false);
   }
 
   // console.log("render", discovery.personas.length, count);
-  async function doResetPersonas(e:any) {
+  async function doResetPersonas(e: any) {
     e.preventDefault();
     await discovery.resetPersonas();
   }
@@ -131,7 +134,11 @@ function Home() {
             and scale for free.
           </p>
           <p className="py-2">
-            Report bugs and <a href="https://github.com/fireproof-storage/epiphany">fork me on GitHub</a>.
+            Report bugs and{" "}
+            <a href="https://github.com/fireproof-storage/epiphany">
+              fork me on GitHub
+            </a>
+            .
           </p>
         </div>
         <div className="w-1/2 p-4 mb-4">
@@ -177,7 +184,16 @@ function Home() {
               valueChanged={setCustomer}
             />
             <div className="flex items-center justify-center">
-              {openAIKey ? (
+              {generating ? (
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  type="submit"
+                  id="generate"
+                  disabled
+                >
+                  Generating...
+                </button>
+              ) : openAIKey ? (
                 discovery.personas.length ? (
                   <>
                     <button
@@ -264,7 +280,7 @@ function FollowUp({ discovery }: any) {
   const [notes, setNotes] = useState("");
   const [count, setCount] = useState(0);
 
-  async function doGenerateSummary(e:any) {
+  async function doGenerateSummary(e: any) {
     e.preventDefault();
     await discovery.generateInterviewSummary();
     setCount(count + 1);
@@ -298,7 +314,7 @@ function FollowUp({ discovery }: any) {
   );
 }
 
-function AskFollowUps({ discovery }:any) {
+function AskFollowUps({ discovery }: any) {
   const [count, setCount] = useState(0);
 
   async function doFollowUp() {

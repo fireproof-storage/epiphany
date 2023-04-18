@@ -25,9 +25,9 @@ export class Discovery {
   constructor() {
     this.db = Fireproof.storage("epiphany");
     window.fireproof = this.db;
+    // only the fields for the home page
     this.typeIndex = new Index(this.db, (doc, map) => {
       map(doc.type, {
-        // only the fields for the home page
         _id : doc._id,
         interviewSummary: doc.interviewSummary || null,
         description: doc.description || null,
@@ -58,9 +58,9 @@ export class Discovery {
   }
 
   async loadPersonas(page) {
-    console.log("do query");
+    // console.log("do query");
     const res = await this.typeIndex.query({ key: "persona" });
-    console.log("personas", res.rows);
+    // console.log("personas", res.rows);
     return await Promise.all(
       res.rows.map(async (r) => {
         if (page !== "home") {
@@ -81,10 +81,10 @@ export class Discovery {
   }
 
   personaById(id) {
-    console.log(
-      id,
-      this.personas.map((p) => p.id)
-    );
+    // console.log(
+    //   id,
+    //   this.personas.map((p) => p.id)
+    // );
     return this.personas.find((p) => p.id === id);
   }
 
@@ -125,6 +125,12 @@ export class Discovery {
 
     for (const person of people) {
       if (!person) continue;
+      if (/^\s*$/.test(person)) continue;
+      if (!/[-:]/.test(person)) {
+        console.log('need to parse', person)
+        continue
+      }
+      // consoloe.log("person", person);
       const persona = new Persona(person, this.doc, this.db);
       await persona.persist();
       this.personas.push(persona);
@@ -213,6 +219,7 @@ export class Persona {
   }
 
   displayAbout() {
+    // console.log(this.description)
     return this.description?.match(/[-:](.*)/)[1];
   }
 
@@ -240,6 +247,7 @@ export class Persona {
       }
     });
     // console.log('persist', doc)
+    // if (doc.description)
     const resp = await this.db.put(doc);
     // console.log('resp', resp)
 
