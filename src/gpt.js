@@ -33,9 +33,10 @@ export class Discovery {
   }
 
   async registerChangeHandler(fn) {
-    this.listener.on("*", async () => {
-      await this.rehydrate();
-      fn();
+    if (this.unlisten) this.unlisten()
+    this.unlisten = this.listener.on("*", async () => {
+      // await this.rehydrate();
+      fn();      
     });
   }
 
@@ -51,10 +52,8 @@ export class Discovery {
   async loadPersonas() {
     console.log("do query");
     const res = await this.typeIndex.query({ key: "persona" });
-    console.log("personas", res.rows);
-    return res.rows.map((r) =>
-      Persona.fromDoc(r.value, this.db)
-    );
+    // console.log("personas", res.rows);
+    return res.rows.map((r) => Persona.fromDoc(r.value, this.db));
   }
 
   async resetPersonas() {
@@ -152,23 +151,40 @@ export class Persona {
     this.customer = customer;
     this.id = null;
     this.db = db;
+    this.spinning = false;
   }
 
   myChat() {
     if (this.chat) return this.chat;
-    this.chat = new ChatOpenAI({
+    const api = new ChatOpenAI({
       temperature: TEMPERATURE,
       openAIApiKey: this.openAIKey,
     });
+    this.chat = {
+      call: async (msgs) => {
+        this.spinning = true;
+        const res = api.call(msgs);
+        this.spinning = false;
+        return res;
+      },
+    };
     return this.chat;
   }
 
   myInterviewer() {
     if (this.interviewer) return this.interviewer;
-    this.interviewer = new ChatOpenAI({
+    const api = new ChatOpenAI({
       temperature: TEMPERATURE,
       openAIApiKey: this.openAIKey,
     });
+    this.interviewer = {
+      call: async (msgs) => {
+        this.spinning = true;
+        const res = api.call(msgs);
+        this.spinning = false;
+        return res;
+      },
+    };
     return this.interviewer;
   }
 
@@ -238,9 +254,9 @@ export class Persona {
     if (!this.didAsk) {
       messages.push(
         new SystemChatMessage(
-          `You will act in a dialog as ${this.description}. We will interview you about ${
-            this.product
-          } 
+          `You will act in a dialog as ${
+            this.description
+          }. We will interview you about ${this.product} 
           designed for someone like ${this.customer}. You have a perspective ${
             this.perspective
           }.
@@ -251,11 +267,13 @@ export class Persona {
       );
       this.didAsk = true;
     }
-    messages.push(new SystemChatMessage(`Here is the next question from the human. 
+    messages.push(
+      new SystemChatMessage(`Here is the next question from the human. 
     Remember to stay in character as ${this.displayName()}. You don't need to say 
     "As an AI language model, I do not have ..." because the tool is well-labelled with AI disclaimers.
     Just answer the question as if you were ${this.displayName()}. Remember that when the interviewer 
-    says "you" they are talking to ${this.displayName()}.`))
+    says "you" they are talking to ${this.displayName()}.`)
+    );
     messages.push(new HumanChatMessage(question));
 
     thisConvo.push({ by: "interviewer", text: question });
@@ -276,19 +294,22 @@ export class Persona {
   }
 
   async summarizeInterview() {
-    // console.log(this.conversations.toString());
+    // console.log(JSON.stringify(this.conversations));
     const qAnswer = await this.myChat().call([
       new SystemChatMessage(
-        `Summarize the interview for another instance of ChatGPT, target summary length is 1000 words.`
+        `Summarize the interview for another instance of ChatGPT, target summary length is 1000 words.
+        Here is the interview text as a reminder: ${JSON.stringify(
+          this.conversations
+        )}`
       ),
       // new SystemChatMessage(
-      //   `Your interview is complete, the interviewer will now ask for a summary. Here is the interview text as a reminder: ${JSON.stringify(
-      //     this.conversations
-      //   )}`
-      // ),
-      // new HumanChatMessage(
-      //   "Provide a list of the most important problems Fireproof can solve for you, and the impact the soltuion would have."
-      // ),
+      //   //   `Your interview is complete, the interviewer will now ask for a summary. Here is the interview text as a reminder: ${JSON.stringify(
+      //   //     this.conversations
+      //   //   )}`
+      //   // ),
+      //   // new HumanChatMessage(
+      //   //   "Provide a list of the most important problems Fireproof can solve for you, and the impact the soltuion would have."
+      //   // ),
     ]);
     this.interviewSummary = qAnswer.text;
     await this.persist();

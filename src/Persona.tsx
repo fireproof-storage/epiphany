@@ -37,34 +37,42 @@ export function PersonaPage() {
     rehydrateDiscovery();
   }, []);
 
-  return <PersonaInterview persona={persona} />;
+  return persona ? <PersonaInterview persona={persona} /> : <></>;
 }
 
 function PersonaInterview({ persona }: any) {
-  if (!persona) return <></>;
-  const [perspective, setPerspective] = useState(persona.perspective);
+  const [perspective, setPerspective] = useState("");
   const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    discovery.listener.on("*", async () => {
+      await discovery.rehydrate();
+    });
+  }, []);
 
   const onChange = useCallback(() => {
     console.log("onchange", count);
     setCount(count + 1);
-  }, [count, setCount, persona]);
+  }, [count, persona, perspective]);
 
   useEffect(() => {
-    discovery.registerChangeHandler(onChange);
-  });
+    setPerspective(persona.perspective);
+  }, [persona]);
+
+  useEffect(() => {
+    if (discovery.hydro) discovery.registerChangeHandler(onChange);
+  }, [onChange]);
 
   async function doInterview(e) {
     e.preventDefault();
-    // console.log("do inteview", persona);
     persona.perspective = perspective;
     await persona.doInterview();
+    await persona.summarizeInterview();
   }
 
   async function doSummary(e) {
     e.preventDefault();
     await persona.summarizeInterview();
-    // setCount(count + 1);
   }
   console.log("ps", count);
   return (

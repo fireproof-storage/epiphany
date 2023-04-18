@@ -16,8 +16,15 @@ export interface LayoutProps {
 }
 function Layout({ children }: LayoutProps): JSX.Element {
   return (
-    <div className="bg-gray-200 min-h-screen dark:bg-gray-900 dark:text-gray-100">
-      <header className="bg-gray-100 py-4 dark:bg-gray-800">
+    <div className="bg-gray-200 text-gray-900 min-h-screen dark:bg-gray-900 dark:text-gray-100">
+      <header className="py-4 bg-gray-800 text-gray-100">
+        <a href="https://fireproof.storage/" style={{position:'absolute'}}>
+            <img
+              src="https://fireproof.storage/static/img/logo-animated.svg"
+              alt="Fireproof Logo"
+              style={{ height: "45px", width: "auto", paddingLeft: "0.5em" }}
+            />
+          </a>
         <div className="container mx-auto">
           <h1 className="text-2xl font-bold text-center">
             <a href="/">Auto Steps to the Epiphany</a>
@@ -54,13 +61,10 @@ function Home() {
   const [customer, setCustomer] = useState("");
   const [openAIKey, setOpenAIKey] = useState("");
 
-  const onChange = useCallback(
-    () => {
-      console.log("onchange", count);
-      setCount(count + 1);
-    },
-    [count],
-  );
+  const onChange = useCallback(() => {
+    // console.log("onchange", count);
+    setCount(count + 1);
+  }, [count]);
 
   async function connectDiscovery() {
     if (discovery.hydro) return;
@@ -82,7 +86,7 @@ function Home() {
     await discovery.generateCustomers(product, customer, openAIKey);
   }
 
-  console.log('render', discovery.personas.length, count)
+  // console.log("render", discovery.personas.length, count);
   async function doResetPersonas(e) {
     e.preventDefault();
     await discovery.resetPersonas();
@@ -94,9 +98,19 @@ function Home() {
         <div className="w-1/2 p-4 mb-4">
           <p className="pb-2">
             This app is inspired by the classic customer development methodology
-            outlined in Steven Blank's <a href="">Four Steps to the Epiphany</a>
+            outlined in Steven G. Blank's{" "}
+            <a href="https://www.google.com/search?q=four+steps+to+the+epiphany&oq=four+steps+to+the+epiphany">
+              The Four Steps to the Epiphany - Successful Strategies for
+              Products that Win
+            </a>
             , which offers practical patterns for finding product market fit.
             The book is a must read for anyone bringing a new product to market.
+          </p>
+          <p className="pb-2">
+            This app uses the auto-GPT method. It creates a set of personas and
+            simulates product interviews with them. It then summarizes each
+            interview and provides and overall summary. This is no substitute
+            for real customer interviews.
           </p>
           <h3 className="text-xl font-bold my-2">Persona Development</h3>
           <p className="py-2">
@@ -110,9 +124,11 @@ function Home() {
           <p className="pb-2">
             Provide your Open AI API key to get started. No data is sent to the
             app, only to OpenAI's APIs. Your work is stored locally in the
-            browser using Fireproof.{" "}
-            <a href="">Read more about using Fireproof with AI</a>, and{" "}
-            <a href="">how to get started with React.</a>
+            browser using Fireproof. Read more about{" "}
+            <a href="https://fireproof.storage/documentation/usefireproof-hook-for-react/">
+              how to get started using Fireproof with React
+            </a>{" "}
+            and scale for free.
           </p>
         </div>
         <div className="w-1/2 p-4 mb-4">
@@ -129,8 +145,8 @@ function Home() {
                 ):
               </label>
               <input
-        className="shadow border-none appearance-none rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-black leading-tight focus:outline-none focus:shadow-outline"
-        type="text"
+                className="shadow border-none appearance-none rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-black leading-tight focus:outline-none focus:shadow-outline"
+                type="text"
                 id="openaikey"
                 name="openaikey"
                 placeholder="sk-..."
@@ -158,35 +174,46 @@ function Home() {
               valueChanged={setCustomer}
             />
             <div className="flex items-center justify-center">
-              {openAIKey ? (discovery.personas.length ? (<><button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                type="submit"
-                id="generate"
-                onClick={doGeneratePersonas}
-              >
-                Generate Additional Personas
-              </button><button
-                className="bg-orange-500 hover:bg-orange-700 ml-2 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                type="submit"
-                id="reset"
-                onClick={doResetPersonas}
-              >
-                Reset Personas
-              </button></>) : (<button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                type="submit"
-                id="generate"
-                onClick={doGeneratePersonas}
-              >
-                Generate Personas
-              </button>)) : (<button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                type="submit"
-                id="generate"
-                disabled
-              >
-                Please enter API key to begin
-              </button>)}
+              {openAIKey ? (
+                discovery.personas.length ? (
+                  <>
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      type="submit"
+                      id="generate"
+                      onClick={doGeneratePersonas}
+                    >
+                      Generate Additional Personas
+                    </button>
+                    <button
+                      className="bg-orange-500 hover:bg-orange-700 ml-2 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      type="submit"
+                      id="reset"
+                      onClick={doResetPersonas}
+                    >
+                      Reset Personas
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    type="submit"
+                    id="generate"
+                    onClick={doGeneratePersonas}
+                  >
+                    Generate Personas
+                  </button>
+                )
+              ) : (
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  type="submit"
+                  id="generate"
+                  disabled
+                >
+                  Please enter API key to begin
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -202,7 +229,7 @@ function Home() {
         {discovery.personas
           .filter((p) => p.description)
           .map((p) => (
-            <PersonaLink persona={p} key={p.id}/>
+            <PersonaLink persona={p} key={p.id} />
           ))}
       </div>
     </main>
