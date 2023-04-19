@@ -113,10 +113,8 @@ function Home() {
           <p className="pb-2">
             This app uses the auto-GPT method. It creates a set of personas and
             simulates product interviews with them. It then summarizes each
-            interview and provides an overall summary. <strong>
-              This is no substitute
-              for real customer interviews.
-            </strong>
+            interview and provides an overall summary.{" "}
+            <strong>This is no substitute for real customer interviews.</strong>
           </p>
           <h3 className="text-xl font-bold my-2">Persona Development</h3>
           <p className="py-2">
@@ -254,6 +252,15 @@ function Home() {
             <PersonaLink persona={p} key={p.id} />
           ))}
       </div>
+      <div>
+        {discovery.personas.find((p) => p.hasInterviewed()) ? (
+          <>
+            <FollowUp discovery={discovery} />
+          </>
+        ) : (
+          <></>
+        )}
+      </div>
     </main>
   );
 }
@@ -261,6 +268,14 @@ function Home() {
 export function TextBox({ label, id, value, valueChanged }: any) {
   return (
     <div className="mb-4">
+      <h3 className="text-xl font-bold text-center m-12">
+        Summary and follow-up
+      </h3>
+      <p className="pb-2">
+        In the next phase, we'll summarize your interviews and come up with a
+        few additional questions to ask. You can add notes to customize the
+        summary, and then ask the additional questions.
+      </p>
       <label
         className="block text-gray-700 font-bold mb-2 dark:text-gray-300"
         htmlFor={id}
@@ -293,14 +308,14 @@ function FollowUp({ discovery }: any) {
     <div className="w-full p-4 mb-4">
       <form>
         <TextBox
-          label="Additional notes based on the interviews"
+          label="Optional notes to include in the summary"
           id="product"
           value={notes}
           valueChanged={setNotes}
         />
         <div className="flex items-center justify-center">
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 my-6 rounded focus:outline-none focus:shadow-outline"
             type="submit"
             id="generate"
             onClick={doGenerateSummary}
@@ -310,7 +325,10 @@ function FollowUp({ discovery }: any) {
         </div>
       </form>
       {discovery.doc.interviewSummary && (
-        <p className="text=-black">{discovery.doc.interviewSummary}</p>
+        <div className="p-4 my-6 bg-gray-100 dark:bg-gray-700 rounded">
+          <h3 className="text-xl font-bold">Summary</h3>
+          <p>{discovery.doc.interviewSummary}</p>
+        </div>
       )}
       {discovery.doc?.followUps && <AskFollowUps discovery={discovery} />}
     </div>
@@ -318,19 +336,29 @@ function FollowUp({ discovery }: any) {
 }
 
 function AskFollowUps({ discovery }: any) {
-  const [count, setCount] = useState(0);
+  const [asking, setAsking] = useState(false);
 
   async function doFollowUp() {
+    setAsking(true);
     await discovery.askFollowUps();
-    setCount(count + 1);
+    setAsking(false);
   }
 
   return (
-    <>
-      <h3>Follow up questions</h3>
+    <div className="p-4 my-6 bg-gray-100 dark:bg-gray-800 rounded">
+      <h3 className="text-xl font-bold">Follow up questions</h3>
       <p className="text=-black">{discovery.doc?.followUps}</p>
-      <button onClick={doFollowUp}>Ask them</button>
-    </>
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 my-6 rounded focus:outline-none focus:shadow-outline"
+        type="submit"
+        id="generate"
+        onClick={doFollowUp}
+        disabled={asking}
+      >
+        {asking ? "Asking..." : "Ask follow-ups"}
+      </button>
+      <p>Answers will appear on the interview pages.</p>
+    </div>
   );
 }
 

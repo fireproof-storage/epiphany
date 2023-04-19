@@ -90,10 +90,26 @@ export class Discovery {
     return Persona.fromDoc(doc, this.db);
   }
 
-  async askFollowUps(followups) {
+  async askFollowUps() {
+    this.personas = await this.loadPersonas();
     return await Promise.all(
-      this.personas.map(async (p) => await p.askFollowUps(followups))
+      this.personas.map(async (p) => await p.askFollowUps(this.doc.followUps))
     );
+  }
+
+  bigInterviewer() {
+    if (this.interviewer) return this.interviewer;
+    const api = new ChatOpenAI({
+      temperature: TEMPERATURE,
+      openAIApiKey: this.doc.openAIKey,
+    });
+    this.interviewer = {
+      call: async (msgs) => {
+        const res = api.call(msgs);
+        return res;
+      },
+    };
+    return this.interviewer;
   }
 
   async generateCustomers(product, customer, openAIKey) {
@@ -102,13 +118,7 @@ export class Discovery {
     this.doc.openAIKey = openAIKey;
     await this.db.put(this.doc);
 
-    if (!this.interviewer) {
-      this.interviewer = new ChatOpenAI({
-        temperature: TEMPERATURE,
-        openAIApiKey: openAIKey,
-      });
-    }
-    const gptPeople = await this.interviewer.call([
+    const gptPeople = await this.bigInterviewer().call([
       new SystemChatMessage(
         `You have read The Four Steps to the Epiphany by Steven Gary Blank and you are ready to
         start your first customer interview. You will help gather people to interview and then interview them.
@@ -140,24 +150,24 @@ export class Discovery {
   }
 
   async generateInterviewSummary() {
-    const summary = await this.interviewer.call([
+    this.loadPersonas()
+    const summary = await this.bigInterviewer().call([
       new SystemChatMessage(
         `Now that you have interviewed your customers, you have a lot of information. Here are the interview summaries
-        for each of your personas: ${[]}`
+        for each of your personas: ${JSON.stringify(this.personas.map(p => p.interviewSummary))}`
       ),
-      // new HumanChatMessage(
-      //   'What are the top 3 questions we should ask the next customer we interview?',
-      // ),
       new HumanChatMessage(
         "Summarize your conversations, highlighting the customers, use-cases, and features that have the most commercial viability."
       ),
     ]);
-    const followUps = await this.interviewer.call([
+    this.doc.interviewSummary = summary.text;
+    await this.db.put(this.doc);
+    const followUps = await this.bigInterviewer().call([
       new HumanChatMessage(
-        "What are the top 3 questions we should ask the next customer we interview?"
+        `Based on this summary ${summary.text}, what are the top 3 questions we should ask the next customer we interview, 
+        in an effort to discover the most compelling ways customers like ${this.doc.customer} could use ${this.doc.product}?`
       ),
     ]);
-    this.doc.interviewSummary = summary.text;
     this.doc.followUps = followUps.text;
     await this.db.put(this.doc);
   }
@@ -177,7 +187,6 @@ export class Persona {
     this.customer = customer;
     this.id = null;
     this.db = db;
-    this.spinning = false;
   }
 
   myChat() {
@@ -188,9 +197,7 @@ export class Persona {
     });
     this.chat = {
       call: async (msgs) => {
-        this.spinning = true;
         const res = api.call(msgs);
-        this.spinning = false;
         return res;
       },
     };
@@ -205,9 +212,7 @@ export class Persona {
     });
     this.interviewer = {
       call: async (msgs) => {
-        this.spinning = true;
         const res = api.call(msgs);
-        this.spinning = false;
         return res;
       },
     };
@@ -259,7 +264,7 @@ export class Persona {
   }
 
   async askFollowUps(followups) {
-    const qAnswer = await this.myChat().call(new HumanChatMessage(followups));
+    const qAnswer = await this.myChat().call([new HumanChatMessage(followups)]);
     this.followUpsAnswer = qAnswer.text;
     await this.persist(this.db);
   }

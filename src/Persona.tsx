@@ -146,6 +146,14 @@ function PersonaInterview({ persona }: any) {
           ) : (
             <></>
           )}
+          {persona.followUpsAnswer ? (
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg mt-6 p-4">
+              <h3 className="text-xl font-bold">Follow-up Answer</h3>
+              <p className="mt-2">{persona.followUpsAnswer}</p>
+            </div>
+          ) : (
+            <></>
+          )}
         </div>
         <div className="w-1/2 px-12">
           <h2 className="text-lg font-bold mb-4">
