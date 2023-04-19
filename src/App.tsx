@@ -1,5 +1,6 @@
 import React, { ReactNode, useCallback, useEffect, useState } from "react";
 import {
+  Link,
   Route,
   Outlet,
   RouterProvider,
@@ -27,7 +28,7 @@ function Layout({ children }: LayoutProps): JSX.Element {
         </a>
         <div className="container mx-auto">
           <h1 className="text-2xl font-bold text-center">
-            <a href="/">Auto Steps to the Epiphany</a>
+            <Link to="/">Auto Steps to the Epiphany</Link>
           </h1>
         </div>
       </header>
@@ -112,8 +113,10 @@ function Home() {
           <p className="pb-2">
             This app uses the auto-GPT method. It creates a set of personas and
             simulates product interviews with them. It then summarizes each
-            interview and provides and overall summary. This is no substitute
-            for real customer interviews.
+            interview and provides an overall summary. <strong>
+              This is no substitute
+              for real customer interviews.
+            </strong>
           </p>
           <h3 className="text-xl font-bold my-2">Persona Development</h3>
           <p className="py-2">

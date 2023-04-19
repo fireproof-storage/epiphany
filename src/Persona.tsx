@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Discovery } from "./gpt";
 
 import { TextBox } from "./App";
@@ -12,9 +12,9 @@ export function PersonaLink({ persona }: any) {
         <p className=" mb-2">{persona.displayAbout()}</p>
         <div className="underline text-right">
           {persona.hasInterviewed() ? (
-            <a href={`/persona/${persona.id}`}>View conversation</a>
+            <Link to={`/persona/${persona.id}`}>View conversation</Link>
           ) : (
-            <a href={`/persona/${persona.id}`}>Conduct interview</a>
+            <Link to={`/persona/${persona.id}`}>Conduct interview</Link>
           )}
         </div>
       </div>
@@ -81,9 +81,9 @@ function PersonaInterview({ persona }: any) {
   }
   return (
     <>
-      <a className="m-8 w-full block" href="/">
+      <Link className="m-8 w-full block" to="/">
         ↩ Back to persona list
-      </a>
+      </Link>
       <div className="w-full flex p-8" key={persona.description}>
         <div className="w-1/2 px-12">
           <h2 className="text-lg font-bold mb-4">{persona.displayName()}</h2>
