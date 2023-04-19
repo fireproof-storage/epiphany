@@ -73,7 +73,9 @@ function Home() {
     // console.log("connectDiscovery");
     await discovery.rehydrate("home");
     discovery.registerChangeHandler(onChange);
-
+    if (discovery.doc?.product) setProduct(discovery.doc.product);
+    if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
+    if (discovery.doc?.openAIKey) setOpenAIKey(discovery.doc.openAIKey);
     setCount(count + 1);
   }
 
@@ -81,11 +83,9 @@ function Home() {
     connectDiscovery();
   }, []);
 
-  useEffect(() => {
-    if (discovery.doc?.product) setProduct(discovery.doc.product);
-    if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
-    if (discovery.doc?.openAIKey) setOpenAIKey(discovery.doc.openAIKey);
-    });
+  // useEffect(() => {
+
+  //   }, [discovery]);
 
   async function doGeneratePersonas(e: any) {
     e.preventDefault();
