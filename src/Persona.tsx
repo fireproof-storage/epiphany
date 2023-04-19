@@ -37,7 +37,7 @@ export function PersonaPage() {
   }, []);
 
   async function updatePersona() {
-    console.log('update persona', id)
+    // console.log('update persona', id)
     const persona = await discovery.personaById(id)
     setPersona(persona);
   }
@@ -47,7 +47,7 @@ export function PersonaPage() {
   }, [id]);
 
 
-  console.log('persona', persona, id)
+  // console.log('persona', persona, id)
   return persona ? <PersonaInterview persona={persona} /> : <></>;
 }
 
