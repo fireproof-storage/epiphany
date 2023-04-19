@@ -73,15 +73,19 @@ function Home() {
     // console.log("connectDiscovery");
     await discovery.rehydrate("home");
     discovery.registerChangeHandler(onChange);
-    if (discovery.doc?.product) setProduct(discovery.doc.product);
-    if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
-    if (discovery.doc?.openAIKey) setOpenAIKey(discovery.doc.openAIKey);
+
     setCount(count + 1);
   }
 
   useEffect(() => {
     connectDiscovery();
   }, []);
+
+  useEffect(() => {
+    if (discovery.doc?.product) setProduct(discovery.doc.product);
+    if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
+    if (discovery.doc?.openAIKey) setOpenAIKey(discovery.doc.openAIKey);
+    });
 
   async function doGeneratePersonas(e: any) {
     e.preventDefault();
@@ -289,10 +293,14 @@ export function TextBox({ label, id, value, valueChanged }: any) {
 function FollowUp({ discovery }: any) {
   const [notes, setNotes] = useState("");
   const [count, setCount] = useState(0);
+  const [isGenerating, setGenerating] = useState(false);
+
 
   async function doGenerateSummary(e: any) {
     e.preventDefault();
+    setGenerating(true);
     await discovery.generateInterviewSummary();
+    setGenerating(false);
     setCount(count + 1);
   }
 
@@ -318,9 +326,10 @@ function FollowUp({ discovery }: any) {
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 my-6 rounded focus:outline-none focus:shadow-outline"
             type="submit"
             id="generate"
+            disabled={isGenerating}
             onClick={doGenerateSummary}
           >
-            Generate Summary
+            {isGenerating ? "Generating..." : "Generate Summary"}
           </button>
         </div>
       </form>
