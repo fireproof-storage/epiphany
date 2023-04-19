@@ -173,6 +173,7 @@ function Home() {
               <p className="italic p-2">
                 If you work for OpenAI, think about implementing{" "}
                 <a href="https://ucan.xyz/">UCAN</a> for distributed auth.
+                If you don't want to set up a key, <a href="https://twitter.com/FireproofStorge/status/1648541950843256832">you can watch the demo video here</a>.
               </p>
             </div>
 
