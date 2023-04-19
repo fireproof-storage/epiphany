@@ -253,7 +253,7 @@ function Home() {
           ))}
       </div>
       <div>
-        {discovery.personas.find((p) => p.hasInterviewed()) ? (
+        {discovery.personas.find((p) => p.interviewSummary) ? (
           <>
             <FollowUp discovery={discovery} />
           </>
@@ -268,14 +268,6 @@ function Home() {
 export function TextBox({ label, id, value, valueChanged }: any) {
   return (
     <div className="mb-4">
-      <h3 className="text-xl font-bold text-center m-12">
-        Summary and follow-up
-      </h3>
-      <p className="pb-2">
-        In the next phase, we'll summarize your interviews and come up with a
-        few additional questions to ask. You can add notes to customize the
-        summary, and then ask the additional questions.
-      </p>
       <label
         className="block text-gray-700 font-bold mb-2 dark:text-gray-300"
         htmlFor={id}
@@ -306,6 +298,14 @@ function FollowUp({ discovery }: any) {
 
   return (
     <div className="w-full p-4 mb-4">
+      <h3 className="text-xl font-bold text-center m-12">
+        Summary and follow-up
+      </h3>
+      <p className="pb-2">
+        In the next phase, we'll summarize your interviews and come up with a
+        few additional questions to ask. You can add notes to customize the
+        summary, and then ask the additional questions.
+      </p>
       <form>
         <TextBox
           label="Optional notes to include in the summary"
