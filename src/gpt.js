@@ -23,8 +23,13 @@ const TEMPERATURE = 0.2;
 
 export class Discovery {
   constructor() {
-    this.db = Fireproof.storage("epiphany");
-    window.fireproof = this.db;
+    // this should useContext or we should just useFireproof ...
+    if (window.fireproof) {
+      this.db = window.fireproof;
+    } else {
+      this.db = Fireproof.storage("epiphany");
+      window.fireproof = this.db;
+    }
     // only the fields for the home page
     this.typeIndex = new Index(this.db, (doc, map) => {
       map(doc.type, {
@@ -80,12 +85,9 @@ export class Discovery {
     await Promise.all(res.rows.map(async (r) => this.db.del(r.value._id)));
   }
 
-  personaById(id) {
-    // console.log(
-    //   id,
-    //   this.personas.map((p) => p.id)
-    // );
-    return this.personas.find((p) => p.id === id);
+  async personaById(id) {
+    const doc = await this.db.get(id);
+    return Persona.fromDoc(doc, this.db);
   }
 
   async askFollowUps(followups) {

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Discovery } from "./gpt";
+import { Discovery, Persona } from "./gpt";
 
 import { TextBox } from "./App";
 
@@ -25,18 +25,29 @@ const discovery = new Discovery();
 
 export function PersonaPage() {
   const { id } = useParams();
-  const [persona, setPersona] = useState(null);
+  const [persona, setPersona] = useState<Persona | null>(null);
 
   async function rehydrateDiscovery() {
     await discovery.rehydrate();
     // discovery.registerChangeHandler(onChange)
-    setPersona(discovery.personaById(id));
   }
 
   useEffect(() => {
     rehydrateDiscovery();
   }, []);
 
+  async function updatePersona() {
+    console.log('update persona', id)
+    const persona = await discovery.personaById(id)
+    setPersona(persona);
+  }
+
+  useEffect(() => {
+    updatePersona()
+  }, [id]);
+
+
+  console.log('persona', persona, id)
   return persona ? <PersonaInterview persona={persona} /> : <></>;
 }
 
