@@ -102,8 +102,8 @@ function Home() {
         <div className="w-1/2 p-4 mb-4">
           <p className="pb-2">
             This app is inspired by the classic customer development methodology
-            outlined in Steven G. Blank's{" "}
-            <a href="https://www.google.com/search?q=four+steps+to+the+epiphany&oq=four+steps+to+the+epiphany">
+            outlined in Steve Blank's{" "}
+            <a href="https://www.google.com/search?q=four+steps+to+the+epiphany">
               The Four Steps to the Epiphany - Successful Strategies for
               Products that Win
             </a>
