@@ -158,7 +158,7 @@ function PersonaInterview({ persona }: any) {
         <div className="w-1/2 px-12">
           <h2 className="text-lg font-bold mb-4">
             {interviewing
-              ? "Interview will take a few minutes"
+              ? "Interview will take a few minutes..."
               : persona.hasInterviewed()
               ? "Interview complete"
               : "Click 'Conduct Interview' to begin"}
