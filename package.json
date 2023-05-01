@@ -8,7 +8,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@fireproof/core": "^0.5.6",
+    "@fireproof/core": "^0.5.7",
     "dotenv": "^16.0.3",
     "langchain": "^0.0.56",
     "react": "^18.2.0",
