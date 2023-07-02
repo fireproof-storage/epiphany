@@ -150,7 +150,7 @@ export class Discovery {
     const summary = await this.bigInterviewer().call([
       new SystemChatMessage(
         `Now that you have interviewed your customers, you have a lot of information. Here are the interview summaries
-        for each of your personas: ${JSON.stringify(this.personas.map(p => p.interviewSummary))}`
+        for each of your personas: ${JSON.stringify(this.personas.map(p => p.interviewSummary?.substr(0, 800)))}`
       ),
       new HumanChatMessage(
         "Summarize your conversations, highlighting the customers, use-cases, and features that have the most commercial viability."

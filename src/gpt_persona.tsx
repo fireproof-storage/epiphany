@@ -7,15 +7,15 @@ import {
 import { TEMPERATURE } from "./gpt";
 
 interface PersonaDoc {
-  openAIKey?: string;
-  description?: string;
-  product?: string;
-  customer?: string;
-  conversations?: Array<{ by: string; text: string }>[];
-  perspective?: string;
-  followUpsAnswer?: string;
-  interviewSummary?: string;
-  didInterview?: boolean;
+  openAIKey: string;
+  description: string;
+  product: string;
+  customer: string;
+  conversations: null |  Array<{ by: string; text: string }>[];
+  perspective: string;
+  followUpsAnswer: string;
+  interviewSummary: string;
+  didInterview: boolean;
   _id?: string;
   [key: string]: any;
 }
@@ -24,34 +24,33 @@ export class Persona implements PersonaDoc {
   static docFields =
     "openAIKey description product customer conversations perspective followUpsAnswer interviewSummary didInterview";
 
-  perspective = "";
-  openAIKey: any;
-  description: any;
   didAsk: boolean;
-  conversations: { by: string; text: string }[][];
-  product: any;
-  customer: any;
+  // conversations: { by: string; text: string }[][];
   id: null | string;
   db: any;
   chat: any;
   interviewer: any;
-  didInterview: any;
-  followUpsAnswer: any;
-  interviewSummary: any;
+  
+  openAIKey: string;
+  description: string;
+  product: string;
+  customer: string;
+  conversations: null |  Array<{ by: string; text: string }>[];
+  perspective = ""
+  followUpsAnswer = ""
+  interviewSummary = ""
+  didInterview = false;
+  _id?: string;
   [key: string]: any;
+
   constructor(
-    description: string | null,
+    description: string,
     {
       product,
       customer,
       openAIKey,
       _id,
-    }: {
-      _id?: string;
-      product?: string;
-      customer?: string;
-      openAIKey?: string;
-    },
+    }: PersonaDoc,
     db: any
   ) {
     this.openAIKey = openAIKey;
@@ -102,7 +101,8 @@ export class Persona implements PersonaDoc {
 
   displayAbout() {
     // console.log(this.description)
-    return this.description?.match(/[:](.*)/)[1];
+    const match = this.description?.match(/[:](.*)/);  
+    return match && match[1];
   }
 
   hasInterviewed() {
@@ -112,7 +112,7 @@ export class Persona implements PersonaDoc {
   }
 
   static fromDoc(doc: PersonaDoc, db: any) {
-    const persona = new Persona(null, doc, db);
+    const persona = new Persona("", doc, db);
     Persona.docFields
       .split(" ")
       .forEach((field: keyof PersonaDoc) => (persona[field] = doc[field]));
@@ -121,7 +121,7 @@ export class Persona implements PersonaDoc {
   }
 
   async persist() {
-    const doc: PersonaDoc & { type: string; _id?: string | null } = {
+    const doc: PersonaDoc = {
       type: "persona",
       openAIKey: this.openAIKey,
       description: this.description,
@@ -138,11 +138,11 @@ export class Persona implements PersonaDoc {
       doc._id = this.id;
     }
 
-    Persona.docFields.split(" ").forEach((field: keyof Persona) => {
-      if (this[field]) {
-        doc[field] = this[field];
-      }
-    });
+    // Persona.docFields.split(" ").forEach((field: keyof Persona) => {
+    //   if (this[field]) {
+    //     doc[field] = this[field];
+    //   }
+    // });
     console.log("persisting", doc);
     const resp = await this.db.put(doc);
     this.id = resp.id;
@@ -176,7 +176,7 @@ export class Persona implements PersonaDoc {
     if (rounds < 1) return;
     if (thisConvo === null) {
       thisConvo = [];
-      this.conversations.push(thisConvo);
+      this.conversations?.push(thisConvo);
     }
     const messages = [];
     if (!this.didAsk) {
@@ -228,9 +228,10 @@ export class Persona implements PersonaDoc {
         `Summarize the interview for another instance of ChatGPT, target summary length is 1000 words.
         Here is the interview text as a reminder: ${JSON.stringify(
           this.conversations
-        )}`
+        ).substring(0, 2000)}`
       ),
     ]);
+    console.log("summary", qAnswer);
     this.interviewSummary = qAnswer.text;
     await this.persist();
   }
