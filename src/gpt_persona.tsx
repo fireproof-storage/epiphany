@@ -1,14 +1,59 @@
 import { ChatOpenAI } from "langchain/chat_models/openai";
-import { HumanChatMessage, SystemChatMessage } from "langchain/schema";
+import {
+  BaseChatMessage,
+  HumanChatMessage,
+  SystemChatMessage,
+} from "langchain/schema";
 import { TEMPERATURE } from "./gpt";
 
+interface PersonaDoc {
+  openAIKey?: string;
+  description?: string;
+  product?: string;
+  customer?: string;
+  conversations?: Array<{ by: string; text: string }>[];
+  perspective?: string;
+  followUpsAnswer?: string;
+  interviewSummary?: string;
+  didInterview?: boolean;
+  _id?: string;
+  [key: string]: any;
+}
 
-export class Persona {
+export class Persona implements PersonaDoc {
   static docFields =
     "openAIKey description product customer conversations perspective followUpsAnswer interviewSummary didInterview";
 
   perspective = "";
-  constructor(description, { product, customer, openAIKey }, db) {
+  openAIKey: any;
+  description: any;
+  didAsk: boolean;
+  conversations: { by: string; text: string }[][];
+  product: any;
+  customer: any;
+  id: null | string;
+  db: any;
+  chat: any;
+  interviewer: any;
+  didInterview: any;
+  followUpsAnswer: any;
+  interviewSummary: any;
+  [key: string]: any;
+  constructor(
+    description: string | null,
+    {
+      product,
+      customer,
+      openAIKey,
+      _id,
+    }: {
+      _id?: string;
+      product?: string;
+      customer?: string;
+      openAIKey?: string;
+    },
+    db: any
+  ) {
     this.openAIKey = openAIKey;
     this.description = description;
     this.didAsk = false;
@@ -26,7 +71,7 @@ export class Persona {
       openAIApiKey: this.openAIKey,
     });
     this.chat = {
-      call: async (msgs) => {
+      call: async (msgs: BaseChatMessage[]) => {
         const res = api.call(msgs);
         return res;
       },
@@ -41,7 +86,7 @@ export class Persona {
       openAIApiKey: this.openAIKey,
     });
     this.interviewer = {
-      call: async (msgs) => {
+      call: async (msgs: BaseChatMessage[]) => {
         const res = api.call(msgs);
         return res;
       },
@@ -66,36 +111,47 @@ export class Persona {
       : this.didInterview;
   }
 
-  static fromDoc(doc, db) {
+  static fromDoc(doc: PersonaDoc, db: any) {
     const persona = new Persona(null, doc, db);
     Persona.docFields
       .split(" ")
-      .forEach((field) => (persona[field] = doc[field]));
-    persona.id = doc._id;
+      .forEach((field: keyof PersonaDoc) => (persona[field] = doc[field]));
+    persona.id = doc._id || null;
     return persona;
   }
 
   async persist() {
-    const doc = { type: "persona" };
+    const doc: PersonaDoc & { type: string; _id?: string | null } = {
+      type: "persona",
+      openAIKey: this.openAIKey,
+      description: this.description,
+      product: this.product,
+      customer: this.customer,
+      conversations: this.conversations,
+      perspective: this.perspective,
+      followUpsAnswer: this.followUpsAnswer,
+      interviewSummary: this.interviewSummary,
+      didInterview: this.didInterview,
+    };
+
     if (this.id) {
       doc._id = this.id;
     }
-    Persona.docFields.split(" ").forEach((field) => {
+
+    Persona.docFields.split(" ").forEach((field: keyof Persona) => {
       if (this[field]) {
         doc[field] = this[field];
       }
     });
-    // console.log('persist', doc)
-    // if (doc.description)
+    console.log("persisting", doc);
     const resp = await this.db.put(doc);
-    // console.log('resp', resp)
     this.id = resp.id;
   }
 
-  async askFollowUps(followups) {
+  async askFollowUps(followups: string) {
     const qAnswer = await this.myChat().call([new HumanChatMessage(followups)]);
     this.followUpsAnswer = qAnswer.text;
-    await this.persist(this.db);
+    await this.persist();
   }
 
   async doInterview() {
@@ -112,9 +168,13 @@ export class Persona {
     );
   }
 
-  async pursueQuestions(question, thisConvo = null, rounds = 3) {
+  async pursueQuestions(
+    question: string,
+    thisConvo: { by: string; text: string }[] | null = null,
+    rounds = 3
+  ): Promise<undefined> {
     if (rounds < 1) return;
-    if (!thisConvo) {
+    if (thisConvo === null) {
       thisConvo = [];
       this.conversations.push(thisConvo);
     }
@@ -145,12 +205,12 @@ export class Persona {
     messages.push(new HumanChatMessage(question));
 
     thisConvo.push({ by: "interviewer", text: question });
-    await this.persist(this.db);
+    await this.persist();
 
     const qAnswer = await this.myChat().call(messages);
 
     thisConvo.push({ by: "persona", text: qAnswer.text });
-    await this.persist(this.db);
+    await this.persist();
 
     const furtherQuestions = await this.myInterviewer().call([
       new SystemChatMessage(
