@@ -72,15 +72,17 @@ function Home() {
     if (discovery.hydro) return;
     // console.log("connectDiscovery");
     await discovery.rehydrate("home");
-    discovery.registerChangeHandler(onChange);
+    // const cleanup = discovery.db.subscribe(onChange);
     if (discovery.doc?.product) setProduct(discovery.doc.product);
     if (discovery.doc?.customer) setCustomer(discovery.doc.customer);
     if (discovery.doc?.openAIKey) setOpenAIKey(discovery.doc.openAIKey);
     setCount(count + 1);
+    // return cleanup;
   }
 
   useEffect(() => {
     connectDiscovery();
+    return discovery.db.subscribe(onChange);
   }, []);
 
   // useEffect(() => {

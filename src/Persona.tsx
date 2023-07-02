@@ -1,26 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Discovery, Persona } from "./gpt";
+import { Discovery } from "./gpt";
+import { Persona } from "./gpt_persona";
 
 import { TextBox } from "./App";
 
-export function PersonaLink({ persona }: any) {
-  return (
-    <div className="w-full md:w-1/3 mb-8 md:pr-4" key={persona.id}>
-      <h2 className="text-lg font-bold  mb-4">{persona.displayName()}</h2>
-      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
-        <p className=" mb-2">{persona.displayAbout()}</p>
-        <div className="underline text-right">
-          {persona.hasInterviewed() ? (
-            <Link to={`/persona/${persona.id}`}>View conversation</Link>
-          ) : (
-            <Link to={`/persona/${persona.id}`}>Conduct interview</Link>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+
 const discovery = new Discovery();
 
 export function PersonaPage() {
@@ -57,7 +42,7 @@ function PersonaInterview({ persona }: any) {
   const [interviewing, setInterviewing] = useState(false);
 
   useEffect(() => {
-    discovery.listener.on("*", async () => {
+    discovery.db.subscribe(async () => {
       await discovery.rehydrate();
     });
   }, []);
@@ -72,7 +57,7 @@ function PersonaInterview({ persona }: any) {
   }, [persona]);
 
   useEffect(() => {
-    if (discovery.hydro) discovery.registerChangeHandler(onChange);
+    if (discovery.hydro) return discovery.db.subscribe(onChange);
   }, [onChange]);
 
   async function doInterview(e:any) {
@@ -193,6 +178,24 @@ function PersonaConversation({ persona, conversation }: any) {
           {said.text}
         </p>
       ))}
+    </div>
+  );
+}
+
+export function PersonaLink({ persona }: any) {
+  return (
+    <div className="w-full md:w-1/3 mb-8 md:pr-4" key={persona.id}>
+      <h2 className="text-lg font-bold  mb-4">{persona.displayName()}</h2>
+      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg p-4">
+        <p className=" mb-2">{persona.displayAbout()}</p>
+        <div className="underline text-right">
+          {persona.hasInterviewed() ? (
+            <Link to={`/persona/${persona.id}`}>View conversation</Link>
+          ) : (
+            <Link to={`/persona/${persona.id}`}>Conduct interview</Link>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
